@@ -1,0 +1,12 @@
+<html>
+ <h1>Admin</h1> 
+ <p>
+  ¡Hola, <span th:text="${nombreUsuario}">[Nombre]</span>! 
+  Tu ID de usuario es: <span th:text="${idUsuario}">[ID]</span>
+</p>
+<form th:action="@{/logout}" method="post">
+  <button type="submit" class="btn btn-danger">
+      Cerrar Sesión
+  </button>
+</form>
+</html>
