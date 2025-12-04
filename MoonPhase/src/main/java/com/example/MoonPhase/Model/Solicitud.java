@@ -31,4 +31,7 @@ public class Solicitud {
 
     @Column(name = "IdUsuario", nullable = true)
     private Long idUsuario;
+
+    @Column(name = "Comentario", nullable = true)
+    private String comentario;
 }
