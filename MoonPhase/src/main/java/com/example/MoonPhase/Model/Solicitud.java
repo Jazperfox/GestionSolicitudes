@@ -34,4 +34,8 @@ public class Solicitud {
 
     @Column(name = "Comentario", nullable = true)
     private String comentario;
+
+    @Column(name = "correoSeguimiento", nullable = true)
+    private String correo;
+
 }

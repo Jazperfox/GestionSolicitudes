@@ -1,6 +1,7 @@
 package com.example.MoonPhase.Controller;
 
 import com.example.MoonPhase.Model.*;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -21,18 +22,21 @@ public class SolicitudController {
     private final AppUsuarioRepository usuarioRepo;
     private final EstadoRepository estadoRepo;
     private final PrioridadRepository prioridadRepo;
+    private  EmailService emailService;
 
 
     public SolicitudController(SolicitudRepository solicitudRepo,
                                CategoriaSolicitudRepository categoriaRepo,
                                AppUsuarioRepository usuarioRepo,
                                EstadoRepository estadoRepo,
-                               PrioridadRepository prioridadRepo) {
+                               PrioridadRepository prioridadRepo,
+                               EmailService emailService) {
         this.solicitudRepo = solicitudRepo;
         this.categoriaRepo = categoriaRepo;
         this.usuarioRepo = usuarioRepo;
         this.estadoRepo = estadoRepo;
         this.prioridadRepo = prioridadRepo;
+        this.emailService = emailService;
 
     }
 
@@ -104,7 +108,7 @@ public class SolicitudController {
         Long idUsuarioLogueado = user.getIdUsuario();
         //Busca solicitudes diferentes de estado 4, o sea, que no estén denegadas y que estén asignadas al usuario logueado
         List<Solicitud> autorizar = solicitudRepo.findSolicitudesAAutorizar(idUsuarioLogueado);
-        // Carga los usuarios
+        // carga los listados para que se muestren los nombre en la vista, y no los ID
         List<AppUsuario> usuarios = usuarioRepo.findAll();
         List<Categoria> categorias = categoriaRepo.findAll();
         List<Estado> estados = estadoRepo.findAll();
@@ -131,7 +135,7 @@ public class SolicitudController {
         Long idUsuarioLogueado = user.getIdUsuario();
         //Busca solicitudes diferentes de estado 4, o sea, que no estén denegadas y que estén asignadas al usuario logueado
         List<Solicitud> autorizar = solicitudRepo.findSolicitudesAAutorizar(idUsuarioLogueado);
-        // Carga los usuarios
+        // carga los listado para que se muestren los nombre y no los ID de los registros
         List<AppUsuario> usuarios = usuarioRepo.findAll();
         List<Categoria> categorias = categoriaRepo.findAll();
         List<Estado> estados = estadoRepo.findAll();
@@ -149,16 +153,37 @@ public class SolicitudController {
 
     @PostMapping("/actualizarAutorizacion")
     public String actualizarAutorizacion(
-            @RequestParam("idSolicitud") int idSolicitud,
+            @RequestParam("idSolicitud") Long idSolicitud,
             @RequestParam("idEstado") Integer idEstado,
             @RequestParam(value = "comentario", required = false) String comentario,
             RedirectAttributes redirectAttributes) {
 
-        // Orden correcto: primero idSolicitud, luego idEstado, luego comentario
+        // Actualizar registro
         solicitudRepo.actualizarEstado(idSolicitud, idEstado, comentario);
 
-        redirectAttributes.addFlashAttribute("msg", "Solicitud actualizada");
+        // Buscar la solicitud para enviar el correo
+        Solicitud sol = solicitudRepo.findById(idSolicitud).orElse(null);
+        if (sol != null && sol.getCorreo() != null) {
+
+
+            try {
+                emailService.enviarCorreoHtml(
+                        sol.getCorreo(),
+                        "Actualización de tu Solicitud #" + sol.getIdSolicitud(),
+                        sol.getIdSolicitud(),
+                        idEstado,
+                        comentario
+                );
+
+            } catch (MessagingException e) {
+                e.printStackTrace();
+                System.out.println("Error enviando correo: " + e.getMessage());
+            }
+        }
+
+        redirectAttributes.addFlashAttribute("msg", "Solicitud actualizada correctamente");
 
         return "redirect:/solicitud/autorizar";
     }
+
 }

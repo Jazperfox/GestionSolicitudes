@@ -24,7 +24,7 @@ public interface SolicitudRepository extends JpaRepository<Solicitud, Long> {
     @Transactional
     @Query("UPDATE Solicitud s SET s.idEstadoSolicitud = :estado, s.comentario = :comentario WHERE s.idSolicitud = :idSolicitud")
     void actualizarEstado(
-            @Param("idSolicitud") int idSolicitud,
+            @Param("idSolicitud") Long idSolicitud,
             @Param("estado") int estado,
             @Param("comentario") String comentario
     );
